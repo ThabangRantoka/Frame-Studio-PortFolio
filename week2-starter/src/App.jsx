@@ -122,7 +122,7 @@ function App() {
 export default App
 
 
-*/
+==========================END=================
 
 export default function App() {
   return (
@@ -141,5 +141,22 @@ export default function App() {
         </p>
       </div>
     </main>
+  )
+}
+
+*/
+
+import Header from './components/Header'
+import Hero from './components/Hero'
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-[#f6f1e7] text-[#2b2a28]">
+      <Header />
+
+      <main id="main">
+        <Hero />
+      </main>
+    </div>
   )
 }
