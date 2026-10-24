@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Installed dependencies and generated builds
+node_modules/
+dist/
+
+# Local settings and secrets
+.env
+.env.*
+
+# Safe templates can be committed
+!.env.example
