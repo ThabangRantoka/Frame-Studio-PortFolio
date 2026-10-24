@@ -33,3 +33,4 @@ dist/
 
 # Safe templates can be committed
 !.env.example
+.neon

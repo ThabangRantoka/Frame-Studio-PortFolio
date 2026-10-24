@@ -3,6 +3,15 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  // Keep both plugins in one array.
   plugins: [react(), tailwindcss()],
+
+  server: {
+    proxy: {
+      // Forward requests beginning with /api to Express.
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
 })
