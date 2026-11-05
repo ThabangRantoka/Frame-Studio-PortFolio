@@ -1,4 +1,45 @@
+import { useEffect, useRef, useState } from 'react'
+
+// Store the address once so all contact actions use the same value.
+const EMAIL = 'thabangrantoka@gmail.com'
+
 export default function Contact() {
+  const [copyMessage, setCopyMessage] = useState('')
+
+  // A ref remembers the timer without causing another render.
+  const messageTimer = useRef(null)
+
+  useEffect(() => {
+    // Clear the timer if this component leaves the page.
+    return () => {
+      window.clearTimeout(messageTimer.current)
+    }
+  }, [])
+
+  async function copyEmail() {
+    window.clearTimeout(messageTimer.current)
+
+    try {
+      await navigator.clipboard.writeText(EMAIL)
+      setCopyMessage('Email address copied.')
+    } catch {
+      // The address stays visible if clipboard access is unavailable.
+      setCopyMessage(
+        'Could not copy automatically. Please select the email address below.',
+      )
+    }
+
+    messageTimer.current = window.setTimeout(() => {
+      setCopyMessage('')
+    }, 4000)
+  }
+
+  const buttonClasses =
+    'inline-flex min-h-12 items-center justify-center border ' +
+    'border-[#a94f32] px-6 py-3 font-bold ' +
+    'focus-visible:outline-2 focus-visible:outline-offset-4 ' +
+    'focus-visible:outline-[#a94f32]'
+
   return (
     <section
       id="contact"
@@ -21,26 +62,39 @@ export default function Contact() {
         Send me an email.
       </p>
 
-      {/* Opens an email draft; the visitor sends it from their email app. */}
-      <a
-        href="mailto:thabangrantoka@gmail.com?subject=Frame%20Studio%20Enquiry"
-        className="mt-8 inline-block border border-[#a94f32] bg-[#a94f32] px-8 py-4 font-bold text-white hover:bg-transparent hover:text-[#a94f32] focus-visible:outline-2 focus-visible:outline-offset-4"
-      >
-        Email Thabang &rarr;
-      </a>
-
-      <p className="mt-6 text-sm text-[#5e5a54]">
+      <div className="mt-8 flex flex-wrap justify-center gap-4">
+        {/* Opens the visitor's configured email application. */}
         <a
-          href="mailto:thabangrantoka@gmail.com"
-          className="break-all underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4"
+          href={`mailto:${EMAIL}?subject=Frame%20Studio%20Enquiry`}
+          className={`${buttonClasses} bg-[#a94f32] text-white hover:bg-transparent hover:text-[#a94f32]`}
         >
-          thabangrantoka@gmail.com
+          Email Thabang &rarr;
         </a>
+
+        <button
+          type="button"
+          onClick={copyEmail}
+          className={`${buttonClasses} text-[#a94f32] hover:bg-[#a94f32] hover:text-white`}
+        >
+          Copy email
+        </button>
+      </div>
+
+      {/* Screen readers announce changes to this message. */}
+      <p
+        role="status"
+        className="mx-auto mt-4 min-h-12 max-w-lg text-sm text-[#a94f32]"
+      >
+        {copyMessage}
       </p>
 
-      <p className="mt-3 text-sm text-[#5e5a54]">
-        The button opens your email app.
-        You can also copy the address above.
+      <p className="mt-2 text-sm text-[#5e5a54]">
+        <a
+          href={`mailto:${EMAIL}`}
+          className="break-all underline underline-offset-4"
+        >
+          {EMAIL}
+        </a>
       </p>
     </section>
   )

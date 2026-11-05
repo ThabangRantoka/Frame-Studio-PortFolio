@@ -2,12 +2,49 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Makes the page adapt to the device's screen width. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>week2-starter</title>
+
+    <title>Thabang Frame Studio — Photography Portfolio</title>
+
+    <meta
+      name="description"
+      content="A concept photography portfolio featuring AI-generated portraits, street scenes and landscapes."
+    />
+
+    <meta name="theme-color" content="#f6f1e7" />
+
+    <!-- Information used when someone shares the website link. -->
+    <meta
+      property="og:title"
+      content="Thabang Frame Studio — Photography Portfolio"
+    />
+    <meta
+      property="og:description"
+      content="Explore portraits, street scenes and landscapes in this student photography portfolio."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://frame-studio-portfolio-client.vercel.app/"
+    />
+    <meta
+      property="og:image"
+      content="https://frame-studio-portfolio-client.vercel.app/images/hero.jpg"
+    />
+    <meta
+      property="og:image:alt"
+      content="A figure standing on a coastal cliff at golden hour."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
+
   <body>
+    <!-- React renders the application inside this element. -->
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

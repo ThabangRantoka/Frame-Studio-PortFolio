@@ -1,30 +1,149 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { authClient } from '../lib/auth'
 
+// Small reusable icon. No additional icon library is required.
+function AccountIcon({ signup = false }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
+      {signup ? (
+        <>
+          <circle cx="12" cy="7" r="4" />
+          <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+        </>
+      ) : (
+        <>
+          <rect x="5" y="10" width="14" height="11" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+          <path d="M12 14v3" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+// Both forms reuse this controlled password field.
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  visible,
+  onToggle,
+  autoComplete,
+}) {
+  return (
+    <div className="frame-auth-field">
+      <label htmlFor={id}>{label}</label>
+
+      <div className="frame-auth-password">
+        <input
+          id={id}
+          name={id}
+          type={visible ? 'text' : 'password'}
+          placeholder={label}
+          autoComplete={autoComplete}
+          required
+          minLength={8}
+          maxLength={128}
+          value={value}
+          onChange={onChange}
+        />
+
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
+          aria-pressed={visible}
+          className="frame-auth-eye"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            aria-hidden="true"
+          >
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+            {visible && <path d="m3 3 18 18" />}
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Account() {
-  // The SDK checks the saved session, including after a page refresh.
+  // Neon checks the session, including after a page refresh.
   const { data: session, isPending, error: sessionError } =
     authClient.useSession()
 
-  // Controlled inputs: React stores each field's current value.
   const [mode, setMode] = useState('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
+
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
-  async function handleSubmit(event) {
-    // Submit through the SDK without reloading the page.
-    event.preventDefault()
-    setBusy(true)
+  const signinHeadingRef = useRef(null)
+  const signupHeadingRef = useRef(null)
+
+  function switchMode(nextMode) {
+    if (busy) return
+
+    setMode(nextMode)
+    setPassword('')
+    setConfirmPassword('')
+    setShowPasswords(false)
     setError('')
     setMessage('')
 
+    // Move keyboard focus onto the newly active side.
+    window.requestAnimationFrame(() => {
+      const heading =
+        nextMode === 'signup'
+          ? signupHeadingRef.current
+          : signinHeadingRef.current
+
+      heading?.focus()
+    })
+  }
+
+  async function handleSubmit(event, formMode) {
+    event.preventDefault()
+
+    // Ignore submissions from the inactive side or while processing.
+    if (busy || formMode !== mode) return
+
+    setError('')
+    setMessage('')
+
+    if (formMode === 'signup' && !name.trim()) {
+      setError('Please enter your name.')
+      return
+    }
+
+    if (formMode === 'signup' && password !== confirmPassword) {
+      setError('Your passwords do not match.')
+      return
+    }
+
+    setBusy(true)
+
     try {
+      // These are the same Neon operations used by your existing form.
       const result =
-        mode === 'signup'
+        formMode === 'signup'
           ? await authClient.signUp.email({
               name: name.trim(),
               email: email.trim(),
@@ -35,21 +154,20 @@ export default function Account() {
               password,
             })
 
-      // The SDK can return an error without throwing an exception.
       if (result.error) {
         setError(result.error.message || 'Authentication failed.')
         return
       }
 
       setPassword('')
+      setConfirmPassword('')
+      setShowPasswords(false)
 
-      if (mode === 'signup') {
-        setMessage(
-          'Account created. If email verification is required, check your inbox.',
-        )
-      } else {
-        setMessage('Signed in successfully.')
-      }
+      setMessage(
+        formMode === 'signup'
+          ? 'Account created. If email verification is required, check your inbox.'
+          : 'Signed in successfully.',
+      )
     } catch {
       setError('Unable to reach authentication. Please try again.')
     } finally {
@@ -58,6 +176,8 @@ export default function Account() {
   }
 
   async function handleSignOut() {
+    if (busy) return
+
     setBusy(true)
     setError('')
     setMessage('')
@@ -71,6 +191,9 @@ export default function Account() {
       }
 
       setPassword('')
+      setConfirmPassword('')
+      setShowPasswords(false)
+      setMode('signin')
       setMessage('You have signed out.')
     } catch {
       setError('Unable to sign out. Please try again.')
@@ -78,18 +201,6 @@ export default function Account() {
       setBusy(false)
     }
   }
-
-  const inputClasses =
-    'mt-2 block w-full min-w-0 rounded border border-[#d9cfbd] ' +
-    'bg-white px-4 py-3 text-[#2b2a28] ' +
-    'focus-visible:outline-2 focus-visible:outline-offset-2 ' +
-    'focus-visible:outline-[#a94f32]'
-
-  const buttonClasses =
-    'rounded bg-[#a94f32] px-6 py-3 font-bold text-white ' +
-    'focus-visible:outline-2 focus-visible:outline-offset-4 ' +
-    'focus-visible:outline-[#a94f32] ' +
-    'disabled:cursor-wait disabled:opacity-60'
 
   return (
     <section
@@ -108,140 +219,260 @@ export default function Account() {
         {session?.user ? 'Welcome back.' : 'Join Frame Studio.'}
       </h2>
 
-      {isPending ? (
-        <p role="status" className="mt-6 text-[#5e5a54]">
-          Checking your session…
-        </p>
-      ) : sessionError ? (
-        <p role="alert" className="mt-6 text-[#a94f32]">
-          Unable to check your session. Please refresh to try again.
-        </p>
-      ) : session?.user ? (
-        <div className="mt-6 max-w-md">
-          {/* Display identity returned by the authentication service. */}
-          <p className="break-words text-[#5e5a54]">
-            Signed in as {session.user.name || session.user.email}.
-          </p>
+      <p className="mt-4 max-w-xl leading-relaxed text-[#5e5a54]">
+        {session?.user
+          ? 'You are signed in to Frame Studio.'
+          : 'Sign in to your account or create one to get started.'}
+      </p>
 
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleSignOut}
-            className={`mt-6 ${buttonClasses}`}
-          >
-            {busy ? 'Signing out…' : 'Sign out'}
-          </button>
-        </div>
-      ) : (
-        <div className="mt-8 max-w-md">
-          <div
-            role="group"
-            aria-label="Choose sign in or create account"
-            className="flex flex-wrap gap-3"
-          >
-            {[
-              ['signin', 'Sign in'],
-              ['signup', 'Create account'],
-            ].map(([value, label]) => (
+      {/* All decorative styling stays inside this account area. */}
+      <div className="frame-auth-stage">
+        <div
+          className="frame-auth-orb frame-auth-orb-one"
+          aria-hidden="true"
+        />
+        <div
+          className="frame-auth-orb frame-auth-orb-two"
+          aria-hidden="true"
+        />
+        <div
+          className="frame-auth-orb frame-auth-orb-three"
+          aria-hidden="true"
+        />
+
+        <div className="frame-auth-wrapper">
+          {isPending ? (
+            <div className="frame-auth-status-card">
+              <div className="frame-auth-logo">
+                <AccountIcon />
+              </div>
+
+              <p role="status">Checking your session…</p>
+            </div>
+          ) : sessionError ? (
+            <div className="frame-auth-status-card">
+              <p role="alert">
+                Unable to check your session. Please refresh to try again.
+              </p>
+            </div>
+          ) : session?.user ? (
+            <div className="frame-auth-status-card">
+              <div className="frame-auth-logo">
+                <AccountIcon signup />
+              </div>
+
+              <h3 className="frame-auth-title">You’re signed in</h3>
+
+              <p className="frame-auth-identity">
+                {session.user.name || session.user.email}
+              </p>
+
               <button
-                key={value}
                 type="button"
-                aria-pressed={mode === value}
+                onClick={handleSignOut}
                 disabled={busy}
-                onClick={() => {
-                  setMode(value)
-                  setPassword('')
-                  setError('')
-                  setMessage('')
-                }}
-                className={`rounded border px-4 py-2
-                  focus-visible:outline-2 focus-visible:outline-offset-4
-                  ${
-                    mode === value
-                      ? 'border-[#2b2a28] bg-[#2b2a28] text-white'
-                      : 'border-[#d9cfbd]'
-                  }`}
+                className="frame-auth-main-button"
               >
-                {label}
+                {busy ? 'Signing out…' : 'Sign out'}
               </button>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="frame-auth-perspective">
+              <div
+                className={`frame-auth-card ${
+                  mode === 'signup' ? 'is-flipped' : ''
+                }`}
+              >
+                {/* Both faces share the same structure and state.
+                    Only the active face can receive keyboard input. */}
+                {['signin', 'signup'].map((formMode) => {
+                  const isSignup = formMode === 'signup'
+                  const active = mode === formMode
 
-          <form onSubmit={handleSubmit} className="mt-6">
-            <fieldset disabled={busy} className="m-0 min-w-0 border-0 p-0">
-              <legend className="sr-only">
-                {mode === 'signup' ? 'Create your account' : 'Sign in'}
-              </legend>
+                  return (
+                    <div
+                      key={formMode}
+                      className={`frame-auth-face ${
+                        isSignup ? 'frame-auth-back' : ''
+                      }`}
+                      inert={!active}
+                      aria-hidden={!active}
+                    >
+                      <div className="frame-auth-logo">
+                        <AccountIcon signup={isSignup} />
+                      </div>
 
-              {mode === 'signup' && (
-                <label className="mb-5 block">
-                  Name
-                  <input
-                    type="text"
-                    name="name"
-                    autoComplete="name"
-                    required
-                    maxLength={100}
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    className={inputClasses}
-                  />
-                </label>
-              )}
+                      <h3
+                        ref={
+                          isSignup
+                            ? signupHeadingRef
+                            : signinHeadingRef
+                        }
+                        id={`frame-${formMode}-title`}
+                        tabIndex={-1}
+                        className="frame-auth-title"
+                      >
+                        {isSignup ? 'Create account' : 'Welcome'}
+                      </h3>
 
-              <label className="mb-5 block">
-                Email
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className={inputClasses}
-                />
-              </label>
+                      <p className="frame-auth-subtitle">
+                        {isSignup
+                          ? 'Make yourself at home at Frame Studio.'
+                          : 'Sign in to your Frame Studio account.'}
+                      </p>
 
-              <label className="mb-5 block">
-                Password
-                <input
-                  type="password"
-                  name="password"
-                  autoComplete={
-                    mode === 'signup' ? 'new-password' : 'current-password'
-                  }
-                  required
-                  minLength={8}
-                  maxLength={128}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className={inputClasses}
-                />
-              </label>
+                      <form
+                        onSubmit={(event) =>
+                          handleSubmit(event, formMode)
+                        }
+                        aria-labelledby={`frame-${formMode}-title`}
+                        aria-busy={active && busy}
+                      >
+                        <fieldset disabled={busy || !active}>
+                          <legend className="sr-only">
+                            {isSignup ? 'Create account' : 'Sign in'}
+                          </legend>
 
-              <button type="submit" className={buttonClasses}>
-                {busy
-                  ? 'Please wait…'
-                  : mode === 'signup'
-                    ? 'Create account'
-                    : 'Sign in'}
-              </button>
-            </fieldset>
-          </form>
+                          {isSignup && (
+                            <div className="frame-auth-field">
+                              <label htmlFor="frame-signup-name">
+                                Full name
+                              </label>
+
+                              <input
+                                id="frame-signup-name"
+                                name="name"
+                                type="text"
+                                placeholder="Full name"
+                                autoComplete="name"
+                                required
+                                maxLength={100}
+                                value={name}
+                                onChange={(event) =>
+                                  setName(event.target.value)
+                                }
+                              />
+                            </div>
+                          )}
+
+                          <div className="frame-auth-field">
+                            <label htmlFor={`frame-${formMode}-email`}>
+                              Email address
+                            </label>
+
+                            <input
+                              id={`frame-${formMode}-email`}
+                              name="email"
+                              type="email"
+                              placeholder="Email address"
+                              autoComplete="email"
+                              required
+                              value={email}
+                              onChange={(event) =>
+                                setEmail(event.target.value)
+                              }
+                            />
+                          </div>
+
+                          <PasswordField
+                            id={`frame-${formMode}-password`}
+                            label="Password"
+                            value={password}
+                            onChange={(event) =>
+                              setPassword(event.target.value)
+                            }
+                            visible={showPasswords}
+                            onToggle={() =>
+                              setShowPasswords((previous) => !previous)
+                            }
+                            autoComplete={
+                              isSignup
+                                ? 'new-password'
+                                : 'current-password'
+                            }
+                          />
+
+                          {isSignup && (
+                            <PasswordField
+                              id="frame-signup-confirm"
+                              label="Confirm password"
+                              value={confirmPassword}
+                              onChange={(event) =>
+                                setConfirmPassword(event.target.value)
+                              }
+                              visible={showPasswords}
+                              onToggle={() =>
+                                setShowPasswords((previous) => !previous)
+                              }
+                              autoComplete="new-password"
+                            />
+                          )}
+
+                          <p className="frame-auth-help">
+                            {isSignup
+                              ? 'Use a password with at least 8 characters.'
+                              : 'Your session stays available after a page refresh.'}
+                          </p>
+
+                          <button
+                            type="submit"
+                            className="frame-auth-main-button"
+                          >
+                            {busy
+                              ? 'Please wait…'
+                              : isSignup
+                                ? 'Create account'
+                                : 'Sign in'}
+                          </button>
+                        </fieldset>
+                      </form>
+
+                      <div className="frame-auth-switch">
+                        <p>
+                          {isSignup
+                            ? 'Already have an account?'
+                            : 'Don’t have an account?'}
+                        </p>
+
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            switchMode(isSignup ? 'signin' : 'signup')
+                          }
+                          className="frame-auth-switch-button"
+                          aria-label={
+                            isSignup
+                              ? 'Switch to sign in'
+                              : 'Switch to create account'
+                          }
+                        >
+                          <span aria-hidden="true">
+                            {isSignup ? '↩' : '+'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Messages remain outside the rotating faces. */}
+          {error && (
+            <p role="alert" className="frame-auth-message is-error">
+              {error}
+            </p>
+          )}
+
+          {message && (
+            <p role="status" className="frame-auth-message">
+              {message}
+            </p>
+          )}
         </div>
-      )}
-
-      {error && (
-        <p role="alert" className="mt-5 max-w-md text-[#a94f32]">
-          {error}
-        </p>
-      )}
-
-      {message && (
-        <p role="status" className="mt-5 max-w-md text-[#5e5a54]">
-          {message}
-        </p>
-      )}
+      </div>
     </section>
   )
 }

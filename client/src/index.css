@@ -1,117 +1,519 @@
-/*
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* =========================================================
+   Frame Studio account display
+   These classes affect only the account section.
+   ========================================================= */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* The account area owns its colours and decorative background. */
+.frame-auth-stage {
+  --auth-bg: #e7ebf0;
+  --auth-text: #303943;
+  --auth-muted: #526171;
+  --auth-accent: #005bc7;
+  --auth-blue: #0072ff;
+  --auth-cyan: #00c6ff;
+  --auth-shadow-dark: rgba(163, 177, 198, 0.65);
+  --auth-shadow-light: rgba(255, 255, 255, 0.95);
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  margin-top: 2rem;
+  padding: 4rem 1.5rem;
+  overflow: hidden;
+  border-radius: 2rem;
+  background: var(--auth-bg);
+  color: var(--auth-text);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+.frame-auth-stage,
+.frame-auth-stage *,
+.frame-auth-stage *::before,
+.frame-auth-stage *::after {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.frame-auth-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 430px;
+  min-width: 0;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* Decorative circles stay within this section. */
+.frame-auth-orb {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--auth-bg);
+  box-shadow:
+    15px 15px 30px var(--auth-shadow-dark),
+    -15px -15px 30px var(--auth-shadow-light);
+  animation: frame-auth-float 6s ease-in-out infinite;
+}
+
+.frame-auth-orb-one {
+  top: 9%;
+  left: 7%;
+  width: 150px;
+  height: 150px;
+}
+
+.frame-auth-orb-two {
+  top: 20%;
+  right: 12%;
+  width: 58px;
+  height: 58px;
+  animation-delay: -2s;
+}
+
+.frame-auth-orb-three {
+  right: 7%;
+  bottom: 8%;
+  width: 110px;
+  height: 110px;
+  animation-delay: -4s;
+}
+
+@keyframes frame-auth-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-16px);
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+
+/* =========================================================
+   Flip animation
+   Both faces occupy one grid cell.
+   Grid allows the card to grow when text or inputs need space.
+   ========================================================= */
+
+.frame-auth-perspective {
+  perspective: 1600px;
 }
-p {
+
+.frame-auth-card {
+  display: grid;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 700ms ease;
+}
+
+.frame-auth-card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.frame-auth-face,
+.frame-auth-status-card {
+  min-width: 0;
+  padding: 2.25rem 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 30px;
+  background: var(--auth-bg);
+  box-shadow:
+    9px 9px 18px var(--auth-shadow-dark),
+    -9px -9px 18px var(--auth-shadow-light);
+}
+
+.frame-auth-face {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.frame-auth-back {
+  transform: rotateY(180deg);
+}
+
+.frame-auth-face[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+.frame-auth-status-card {
+  text-align: center;
+}
+
+/* =========================================================
+   Heading and icon
+   ========================================================= */
+
+.frame-auth-logo {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  background: var(--auth-bg);
+  color: var(--auth-accent);
+  box-shadow:
+    8px 8px 16px var(--auth-shadow-dark),
+    -8px -8px 16px var(--auth-shadow-light);
+}
+
+.frame-auth-logo svg {
+  width: 30px;
+  height: 30px;
+}
+
+.frame-auth-title {
   margin: 0;
+  color: var(--auth-text);
+  font-family: inherit;
+  font-size: clamp(1.65rem, 5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
+.frame-auth-subtitle {
+  margin: 0.65rem 0 1.75rem;
+  color: var(--auth-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.frame-auth-identity {
+  margin: 1rem 0 2rem;
+  overflow-wrap: anywhere;
+  color: var(--auth-muted);
+}
+
+/* =========================================================
+   Forms and recessed inputs
+   ========================================================= */
+
+.frame-auth-face form {
+  width: 100%;
+}
+
+.frame-auth-face fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.frame-auth-field {
+  margin-bottom: 1rem;
+}
+
+.frame-auth-field > label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: var(--auth-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.frame-auth-field input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0.85rem 1rem;
+  border: 1px solid #aebdcd;
+  border-radius: 16px;
+  background: var(--auth-bg);
+  color: var(--auth-text);
+  font: inherit;
+  font-size: 0.95rem;
+  box-shadow:
+    inset 6px 6px 12px var(--auth-shadow-dark),
+    inset -6px -6px 12px var(--auth-shadow-light);
+}
+
+.frame-auth-field input::placeholder {
+  color: var(--auth-muted);
+}
+
+.frame-auth-field input:focus-visible {
+  outline: 3px solid var(--auth-accent);
+  outline-offset: 3px;
+}
+
+.frame-auth-password {
+  position: relative;
+}
+
+.frame-auth-password input {
+  padding-right: 3.5rem;
+}
+
+.frame-auth-eye {
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--auth-muted);
+  cursor: pointer;
+}
+
+.frame-auth-eye:hover {
+  color: var(--auth-accent);
+}
+
+.frame-auth-eye svg {
+  width: 21px;
+  height: 21px;
+}
+
+.frame-auth-help {
+  margin: 0.25rem 0 1.25rem;
+  color: var(--auth-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   Animated blue button
+   The gradient moves only while the button is active.
+   ========================================================= */
+
+.frame-auth-main-button {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.9rem 1rem;
+  overflow: hidden;
+  border: 1px solid #aebdcd;
+  border-radius: 16px;
+  background: var(--auth-bg);
+  color: var(--auth-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    6px 6px 12px var(--auth-shadow-dark),
+    -6px -6px 12px var(--auth-shadow-light);
+  transition:
+    transform 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.frame-auth-main-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--auth-blue),
+    var(--auth-cyan),
+    var(--auth-blue)
+  );
+  background-size: 200% 100%;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 350ms ease;
 }
 
-*/
+/* Dark text remains readable across the blue/cyan gradient. */
+.frame-auth-main-button:not(:disabled):hover,
+.frame-auth-main-button:not(:disabled):focus-visible {
+  transform: translateY(-2px);
+  color: #091525;
+  box-shadow: 0 10px 22px rgba(0, 114, 255, 0.25);
+}
 
-@import "tailwindcss";
+.frame-auth-main-button:not(:disabled):hover::before,
+.frame-auth-main-button:not(:disabled):focus-visible::before {
+  transform: scaleY(1);
+  animation: frame-auth-gradient 2.5s linear infinite;
+}
+
+@keyframes frame-auth-gradient {
+  from {
+    background-position: 0% 0%;
+  }
+
+  to {
+    background-position: 200% 0%;
+  }
+}
+
+/* =========================================================
+   Switch between login and signup
+   ========================================================= */
+
+.frame-auth-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 1.75rem;
+  color: var(--auth-muted);
+  text-align: center;
+}
+
+.frame-auth-switch p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.frame-auth-switch-button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #aebdcd;
+  border-radius: 50%;
+  background: var(--auth-bg);
+  color: var(--auth-accent);
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow:
+    6px 6px 12px var(--auth-shadow-dark),
+    -6px -6px 12px var(--auth-shadow-light);
+  transition:
+    transform 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.frame-auth-switch-button:not(:disabled):hover {
+  transform: rotate(12deg);
+  background: var(--auth-accent);
+  color: white;
+}
+
+.frame-auth-stage button:focus-visible {
+  outline: 3px solid var(--auth-accent);
+  outline-offset: 4px;
+}
+
+.frame-auth-stage button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.frame-auth-stage input:disabled {
+  opacity: 0.7;
+}
+
+/* Messages can grow without being clipped by the card. */
+.frame-auth-message {
+  margin: 1.5rem 0 0;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+  border: 1px solid #aebdcd;
+  border-radius: 12px;
+  background: #f5f8fc;
+  color: var(--auth-text);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.frame-auth-message.is-error {
+  border-color: #b45151;
+  background: #fff4f4;
+  color: #922525;
+}
+
+/* Small phones need less padding around the card. */
+@media (max-width: 420px) {
+  .frame-auth-stage {
+    padding: 2.5rem 1rem;
+    border-radius: 1.25rem;
+  }
+
+  .frame-auth-face,
+  .frame-auth-status-card {
+    padding: 1.75rem 1.15rem;
+    border-radius: 24px;
+  }
+
+  .frame-auth-orb-one {
+    width: 95px;
+    height: 95px;
+  }
+
+  .frame-auth-orb-three {
+    width: 75px;
+    height: 75px;
+  }
+}
+
+/* Respect visitors who request less animation. */
+@media (prefers-reduced-motion: reduce) {
+  .frame-auth-stage *,
+  .frame-auth-stage *::before,
+  .frame-auth-stage *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Match the account display to the Frame Studio palette. */
+.frame-auth-stage {
+  --auth-bg: #f6f1e7;
+  --auth-text: #2b2a28;
+  --auth-muted: #5e5a54;
+  --auth-accent: #a94f32;
+
+  /* Warm colours for the animated button. */
+  --auth-blue: #a94f32;
+  --auth-cyan: #c87855;
+
+  --auth-shadow-dark: rgba(176, 160, 132, 0.45);
+  --auth-shadow-light: rgba(255, 255, 255, 0.95);
+}
+
+/* Replace the cool blue-grey borders with warm borders. */
+.frame-auth-field input,
+.frame-auth-main-button,
+.frame-auth-switch-button {
+  border-color: #c6b9a5;
+}
+
+/* White text suits the darker terracotta gradient. */
+.frame-auth-main-button:not(:disabled):hover,
+.frame-auth-main-button:not(:disabled):focus-visible {
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(169, 79, 50, 0.22);
+}
+
+.frame-auth-message {
+  border-color: #d9cfbd;
+  background: #fffaf2;
+  color: #2b2a28;
+}
+
+.frame-auth-message.is-error {
+  border-color: #b45151;
+  background: #fff4f4;
+  color: #922525;
+}
