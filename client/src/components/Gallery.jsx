@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import FavouriteToggle from './FavouriteToggle'
+import Lightbox from './Lightbox'
 
 export default function Gallery() {
   // Database records and request status.
@@ -10,6 +11,8 @@ export default function Gallery() {
   // The gallery owns the filter and favourite state.
   const [category, setCategory] = useState('All')
   const [favourites, setFavourites] = useState({})
+  
+  const [openIndex, setOpenIndex] = useState(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -76,6 +79,8 @@ export default function Gallery() {
       aria-labelledby="gallery-title"
       aria-busy={loading}
       className="mx-auto max-w-7xl border-t border-[#d9cfbd] px-6 py-12 md:py-20"
+
+
     >
       <p className="text-xs font-bold uppercase tracking-widest text-[#a94f32]">
         01 — Selected work
@@ -89,8 +94,8 @@ export default function Gallery() {
       </h2>
 
       <p className="mt-4 max-w-2xl leading-relaxed text-[#5e5a54]">
-        All images are AI-generated examples for this student project.
-        Select a photograph to open it full size in a new tab.
+        All images are AI-generated for this project.
+        Select a photograph to view it larger.
       </p>
 
       {loading && (
@@ -145,19 +150,32 @@ export default function Gallery() {
 
           {/* Mobile first: one, two, then three columns. */}
           <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {visiblePhotos.map((photo) => {
+            {visiblePhotos.map((photo, index) => {
               const imageUrl =
                 `${import.meta.env.BASE_URL}images/${photo.file}`
 
               return (
                 <figure key={photo.id} className="min-w-0">
-                  <a
-                    href={imageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`View ${photo.title} full size in a new tab`}
-                    className="block overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-4"
-                  >
+                      <a
+  href={imageUrl}
+  onClick={(event) => {
+    // Keep modified clicks available for normal browser behaviour.
+    if (
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    setOpenIndex(index)
+  }}
+  aria-label={`View ${photo.title} larger`}
+  className="block overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a94f32]"
+
+                      >
                     <img
                       src={imageUrl}
                       alt={photo.alt}
@@ -190,6 +208,14 @@ export default function Gallery() {
           </div>
         </>
       )}
+          {openIndex !== null && visiblePhotos[openIndex] && (
+            <Lightbox
+              photos={visiblePhotos}
+              index={openIndex}
+              onClose={() => setOpenIndex(null)}
+              onNavigate={setOpenIndex}
+            />
+          )}
     </section>
   )
 }

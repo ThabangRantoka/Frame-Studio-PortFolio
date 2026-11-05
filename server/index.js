@@ -6,7 +6,10 @@ if (!process.env.DATABASE_URL) {
 }
 
 const app = express()
+// Remove the optional header identifying the server framework.
+app.disable('x-powered-by')
 const PORT = process.env.PORT || 3000
+
 
 // Reuse this pool for incoming database requests.
 const pool = new Pool({
@@ -31,14 +34,17 @@ app.get('/api/health', (req, res) => {
 app.get('/api/photos', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, title, category, file, alt FROM photos ORDER BY id'
+      'SELECT id, title, category, file, alt FROM photos ORDER BY id',
     )
 
+    res.set('Cache-Control', 'public, max-age=60')
     res.json(result.rows)
   } catch (error) {
-    console.error('Loading photos failed:', error.code || 'Unknown error')
+    console.error(
+      'Loading photos failed:',
+      error.code || 'Unknown error',
+    )
 
-    // Return a useful message without exposing database details.
     res.status(500).json({
       message: 'Unable to load photos. Please try again later.',
     })

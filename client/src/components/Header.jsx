@@ -29,6 +29,12 @@ export default function Header() {
           </li>
 
           <li>
+            <a href="#account">
+              Account
+            </a>
+          </li>
+
+          <li>
             <a
               href="#contact"
               className="hover:text-[#a94f32] focus-visible:outline-2 focus-visible:outline-offset-4"
@@ -36,6 +42,7 @@ export default function Header() {
               Contact
             </a>
           </li>
+          
         </ul>
       </nav>
     </header>
